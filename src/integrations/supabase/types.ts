@@ -9,6 +9,95 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      courses: {
+        Row: {
+          created_at: string
+          description: string | null
+          duration_hours: number | null
+          grade_level: string
+          id: string
+          instructor_id: string | null
+          instructor_name: string | null
+          language: string
+          rating: number | null
+          student_count: number | null
+          subject: string
+          tags: string[] | null
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          duration_hours?: number | null
+          grade_level: string
+          id?: string
+          instructor_id?: string | null
+          instructor_name?: string | null
+          language?: string
+          rating?: number | null
+          student_count?: number | null
+          subject: string
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          duration_hours?: number | null
+          grade_level?: string
+          id?: string
+          instructor_id?: string | null
+          instructor_name?: string | null
+          language?: string
+          rating?: number | null
+          student_count?: number | null
+          subject?: string
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      enrollments: {
+        Row: {
+          completed_at: string | null
+          course_id: string
+          enrolled_at: string
+          id: string
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          course_id: string
+          enrolled_at?: string
+          id?: string
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          course_id?: string
+          enrolled_at?: string
+          id?: string
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enrollments_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -33,6 +122,39 @@ export type Database = {
           id?: string
           updated_at?: string
           user_type?: string
+        }
+        Relationships: []
+      }
+      tutoring_sessions: {
+        Row: {
+          created_at: string
+          duration_hours: number
+          id: string
+          scheduled_at: string
+          status: string | null
+          student_id: string
+          subject: string
+          teacher_id: string
+        }
+        Insert: {
+          created_at?: string
+          duration_hours?: number
+          id?: string
+          scheduled_at: string
+          status?: string | null
+          student_id: string
+          subject: string
+          teacher_id: string
+        }
+        Update: {
+          created_at?: string
+          duration_hours?: number
+          id?: string
+          scheduled_at?: string
+          status?: string | null
+          student_id?: string
+          subject?: string
+          teacher_id?: string
         }
         Relationships: []
       }
