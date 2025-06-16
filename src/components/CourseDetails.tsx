@@ -1,15 +1,13 @@
 
-import { useState } from 'react';
 import { useCourse } from '@/hooks/useCourses';
+import { useEnrollment, useEnrollInCourse } from '@/hooks/useEnrollments';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Star, Users, Clock, BookOpen, User, ArrowLeft } from 'lucide-react';
+import { Star, Users, Clock, User, ArrowLeft, CheckCircle } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/hooks/use-toast';
 
 interface CourseDetailsProps {
   courseId: string;
@@ -18,46 +16,13 @@ interface CourseDetailsProps {
 
 export function CourseDetails({ courseId, onBack }: CourseDetailsProps) {
   const { data: course, isLoading } = useCourse(courseId);
+  const { data: enrollment, isLoading: enrollmentLoading } = useEnrollment(courseId);
+  const enrollMutation = useEnrollInCourse();
   const { user } = useAuth();
-  const [enrolling, setEnrolling] = useState(false);
 
-  const handleEnroll = async () => {
+  const handleEnroll = () => {
     if (!user || !course) return;
-    
-    setEnrolling(true);
-    try {
-      const { error } = await supabase
-        .from('enrollments')
-        .insert({
-          user_id: user.id,
-          course_id: course.id,
-        });
-
-      if (error) {
-        if (error.code === '23505') { // Unique constraint violation
-          toast({
-            title: "Already Enrolled",
-            description: "You are already enrolled in this course.",
-            variant: "destructive",
-          });
-        } else {
-          throw error;
-        }
-      } else {
-        toast({
-          title: "Enrollment Successful",
-          description: "You have been enrolled in the course!",
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Enrollment Failed",
-        description: "There was an error enrolling in the course.",
-        variant: "destructive",
-      });
-    } finally {
-      setEnrolling(false);
-    }
+    enrollMutation.mutate(courseId);
   };
 
   if (isLoading) {
@@ -76,6 +41,8 @@ export function CourseDetails({ courseId, onBack }: CourseDetailsProps) {
       </div>
     );
   }
+
+  const isEnrolled = !!enrollment;
 
   return (
     <div className="space-y-6">
@@ -169,23 +136,32 @@ export function CourseDetails({ courseId, onBack }: CourseDetailsProps) {
         <div className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Enroll in Course</CardTitle>
+              <CardTitle>
+                {isEnrolled ? 'Enrolled' : 'Enroll in Course'}
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Button 
-                onClick={handleEnroll} 
-                className="w-full" 
-                disabled={enrolling}
-              >
-                {enrolling ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Enrolling...
-                  </>
-                ) : (
-                  'Enroll Now'
-                )}
-              </Button>
+              {isEnrolled ? (
+                <div className="flex items-center gap-2 text-green-600 bg-green-50 p-3 rounded-lg">
+                  <CheckCircle className="h-5 w-5" />
+                  <span className="font-medium">You are enrolled in this course</span>
+                </div>
+              ) : (
+                <Button 
+                  onClick={handleEnroll} 
+                  className="w-full" 
+                  disabled={enrollMutation.isPending || enrollmentLoading}
+                >
+                  {enrollMutation.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Enrolling...
+                    </>
+                  ) : (
+                    'Enroll Now'
+                  )}
+                </Button>
+              )}
               <div className="text-sm text-gray-600">
                 <div className="flex justify-between">
                   <span>Duration:</span>

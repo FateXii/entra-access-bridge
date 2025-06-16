@@ -1,211 +1,134 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { LogOut, User, GraduationCap, BookOpen, Users, Home, Calendar } from 'lucide-react';
-import { CourseCatalog } from './CourseCatalog';
-import { CourseDetails } from './CourseDetails';
-import { TutoringSessions } from './TutoringSessions';
-import { UserProfile } from './UserProfile';
-import { ProfileCompletionFlow } from './ProfileCompletionFlow';
 import { useProfileCompletion } from '@/hooks/useProfileCompletion';
+import { ProfileCompletionFlow } from '@/components/ProfileCompletionFlow';
+import { CourseCatalog } from '@/components/CourseCatalog';
+import { CourseDetails } from '@/components/CourseDetails';
+import { TutoringSessions } from '@/components/TutoringSessions';
+import { UserProfile } from '@/components/UserProfile';
+import { Button } from '@/components/ui/button';
+import { BookOpen, Calendar, User, GraduationCap, LogOut } from 'lucide-react';
 
-type Page = 'home' | 'courses' | 'course-details' | 'tutoring' | 'profile';
+type View = 'catalog' | 'course-details' | 'tutoring' | 'profile';
 
 export function Dashboard() {
   const { user, signOut } = useAuth();
-  const { isProfileComplete, loading, markProfileComplete } = useProfileCompletion();
-  const [currentPage, setCurrentPage] = useState<Page>('home');
-  const [selectedCourseId, setSelectedCourseId] = useState<string>('');
+  const { isProfileComplete, loading, refetch } = useProfileCompletion();
+  const [currentView, setCurrentView] = useState<View>('catalog');
+  const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
+  const [showProfileCompletion, setShowProfileCompletion] = useState(false);
+
+  useEffect(() => {
+    if (!loading && !isProfileComplete) {
+      setShowProfileCompletion(true);
+    }
+  }, [loading, isProfileComplete]);
+
+  const handleProfileComplete = () => {
+    setShowProfileCompletion(false);
+    refetch();
+  };
+
+  const handleCourseSelect = (courseId: string) => {
+    setSelectedCourseId(courseId);
+    setCurrentView('course-details');
+  };
+
+  const handleBackToCatalog = () => {
+    setCurrentView('catalog');
+    setSelectedCourseId(null);
+  };
 
   const handleSignOut = async () => {
     await signOut();
   };
 
-  // Show loading state
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (isProfileComplete === false) {
-    return <ProfileCompletionFlow onComplete={markProfileComplete} />;
-  }
-
-  const renderNavigation = () => (
-    <nav className="bg-white shadow-sm border-b">
-      <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center h-16">
-          <div className="flex items-center space-x-8">
-            <h1 className="text-xl font-bold text-blue-600">Minerva</h1>
-            <div className="flex space-x-6">
-              <Button
-                variant={currentPage === 'home' ? 'default' : 'ghost'}
-                onClick={() => setCurrentPage('home')}
-                className="flex items-center gap-2"
-              >
-                <Home className="h-4 w-4" />
-                Dashboard
-              </Button>
-              <Button
-                variant={currentPage === 'courses' ? 'default' : 'ghost'}
-                onClick={() => setCurrentPage('courses')}
-                className="flex items-center gap-2"
-              >
-                <BookOpen className="h-4 w-4" />
-                Courses
-              </Button>
-              <Button
-                variant={currentPage === 'tutoring' ? 'default' : 'ghost'}
-                onClick={() => setCurrentPage('tutoring')}
-                className="flex items-center gap-2"
-              >
-                <Calendar className="h-4 w-4" />
-                Tutoring
-              </Button>
-              <Button
-                variant={currentPage === 'profile' ? 'default' : 'ghost'}
-                onClick={() => setCurrentPage('profile')}
-                className="flex items-center gap-2"
-              >
-                <User className="h-4 w-4" />
-                Profile
-              </Button>
-            </div>
-          </div>
-          <Button onClick={handleSignOut} variant="outline">
-            <LogOut className="mr-2 h-4 w-4" />
-            Sign Out
-          </Button>
-        </div>
-      </div>
-    </nav>
-  );
-
   const renderContent = () => {
-    switch (currentPage) {
-      case 'courses':
-        return <CourseCatalog />;
+    switch (currentView) {
+      case 'catalog':
+        return <CourseCatalog onCourseSelect={handleCourseSelect} />;
       case 'course-details':
-        return (
-          <CourseDetails
-            courseId={selectedCourseId}
-            onBack={() => setCurrentPage('courses')}
-          />
+        return selectedCourseId ? (
+          <CourseDetails courseId={selectedCourseId} onBack={handleBackToCatalog} />
+        ) : (
+          <CourseCatalog onCourseSelect={handleCourseSelect} />
         );
       case 'tutoring':
         return <TutoringSessions />;
       case 'profile':
         return <UserProfile />;
       default:
-        return (
-          <div className="space-y-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Welcome back!</h1>
-              <p className="text-gray-600">Continue your learning journey</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setCurrentPage('courses')}>
-                <CardHeader>
-                  <CardTitle className="flex items-center text-lg">
-                    <BookOpen className="mr-2 h-5 w-5 text-blue-600" />
-                    Browse Courses
-                  </CardTitle>
-                  <CardDescription>Explore available courses</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-2xl font-bold text-blue-600">150+</p>
-                  <p className="text-sm text-gray-600">Courses available</p>
-                </CardContent>
-              </Card>
-
-              <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setCurrentPage('tutoring')}>
-                <CardHeader>
-                  <CardTitle className="flex items-center text-lg">
-                    <Calendar className="mr-2 h-5 w-5 text-green-600" />
-                    Tutoring Sessions
-                  </CardTitle>
-                  <CardDescription>Book one-on-one sessions</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-2xl font-bold text-green-600">Book Now</p>
-                  <p className="text-sm text-gray-600">Expert tutors available</p>
-                </CardContent>
-              </Card>
-
-              <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setCurrentPage('profile')}>
-                <CardHeader>
-                  <CardTitle className="flex items-center text-lg">
-                    <User className="mr-2 h-5 w-5 text-purple-600" />
-                    My Profile
-                  </CardTitle>
-                  <CardDescription>View your progress</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-2xl font-bold text-purple-600">Track</p>
-                  <p className="text-sm text-gray-600">Learning progress</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center text-lg">
-                    <GraduationCap className="mr-2 h-5 w-5 text-orange-600" />
-                    Achievements
-                  </CardTitle>
-                  <CardDescription>Certificates earned</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-2xl font-bold text-orange-600">0</p>
-                  <p className="text-sm text-gray-600">Certificates</p>
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Recent Activity</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-600">Your recent course activity will appear here.</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Upcoming Sessions</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-600">Your upcoming tutoring sessions will appear here.</p>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        );
+        return <CourseCatalog onCourseSelect={handleCourseSelect} />;
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {renderNavigation()}
-      <div className="container mx-auto p-6">
-        {renderContent()}
-      </div>
-      
-      {/* Profile completion modal */}
       <ProfileCompletionFlow 
-        open={isProfileComplete === false} 
-        onComplete={markProfileComplete} 
+        open={showProfileCompletion} 
+        onComplete={handleProfileComplete} 
       />
+      
+      <header className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center">
+              <GraduationCap className="h-8 w-8 text-blue-600 mr-3" />
+              <h1 className="text-xl font-bold text-gray-900">EduPlatform</h1>
+            </div>
+            <div className="flex items-center space-x-4">
+              <span className="text-sm text-gray-600">Welcome, {user?.email}</span>
+              <Button onClick={handleSignOut} variant="ghost" size="sm">
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign Out
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <nav className="mb-8">
+          <div className="flex space-x-1 bg-white rounded-lg p-1 shadow-sm">
+            <button
+              onClick={() => setCurrentView('catalog')}
+              className={`flex items-center px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                currentView === 'catalog' || currentView === 'course-details'
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+              }`}
+            >
+              <BookOpen className="h-4 w-4 mr-2" />
+              Course Catalog
+            </button>
+            <button
+              onClick={() => setCurrentView('tutoring')}
+              className={`flex items-center px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                currentView === 'tutoring'
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+              }`}
+            >
+              <Calendar className="h-4 w-4 mr-2" />
+              Tutoring Sessions
+            </button>
+            <button
+              onClick={() => setCurrentView('profile')}
+              className={`flex items-center px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                currentView === 'profile'
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+              }`}
+            >
+              <User className="h-4 w-4 mr-2" />
+              Profile
+            </button>
+          </div>
+        </nav>
+
+        <main>{renderContent()}</main>
+      </div>
     </div>
   );
 }
