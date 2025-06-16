@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -22,7 +23,7 @@ export function Dashboard() {
     await signOut();
   };
 
-  // Show profile completion flow if profile is incomplete
+  // Show loading state
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -199,6 +200,12 @@ export function Dashboard() {
       <div className="container mx-auto p-6">
         {renderContent()}
       </div>
+      
+      {/* Profile completion modal */}
+      <ProfileCompletionFlow 
+        open={isProfileComplete === false} 
+        onComplete={markProfileComplete} 
+      />
     </div>
   );
 }

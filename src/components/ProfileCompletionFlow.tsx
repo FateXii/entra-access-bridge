@@ -1,12 +1,12 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { User, AlertCircle, CheckCircle } from 'lucide-react';
+import { AlertCircle, CheckCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import type { Tables } from '@/integrations/supabase/types';
@@ -14,10 +14,11 @@ import type { Tables } from '@/integrations/supabase/types';
 type Profile = Tables<'profiles'>;
 
 interface ProfileCompletionFlowProps {
+  open: boolean;
   onComplete: () => void;
 }
 
-export function ProfileCompletionFlow({ onComplete }: ProfileCompletionFlowProps) {
+export function ProfileCompletionFlow({ open, onComplete }: ProfileCompletionFlowProps) {
   const { user } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [fullName, setFullName] = useState('');
@@ -26,10 +27,10 @@ export function ProfileCompletionFlow({ onComplete }: ProfileCompletionFlowProps
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (user) {
+    if (user && open) {
       fetchProfile();
     }
-  }, [user]);
+  }, [user, open]);
 
   const fetchProfile = async () => {
     if (!user) return;
@@ -93,39 +94,33 @@ export function ProfileCompletionFlow({ onComplete }: ProfileCompletionFlowProps
     }
   };
 
-  const isProfileIncomplete = () => {
-    return !profile?.full_name?.trim() || !profile?.user_type;
-  };
-
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading your profile...</p>
-        </div>
-      </div>
+      <Dialog open={open} onOpenChange={() => {}}>
+        <DialogContent className="sm:max-w-md" hideClose>
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading your profile...</p>
+          </div>
+        </DialogContent>
+      </Dialog>
     );
   }
 
-  if (!profile || !isProfileIncomplete()) {
-    onComplete();
-    return null;
-  }
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
+    <Dialog open={open} onOpenChange={() => {}}>
+      <DialogContent className="sm:max-w-md" hideClose>
+        <DialogHeader className="text-center">
           <div className="mx-auto w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mb-4">
             <AlertCircle className="h-6 w-6 text-orange-600" />
           </div>
-          <CardTitle className="text-xl font-bold">Complete Your Profile</CardTitle>
-          <CardDescription>
+          <DialogTitle className="text-xl font-bold">Complete Your Profile</DialogTitle>
+          <DialogDescription>
             We need a few more details to personalize your learning experience
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div className="space-y-4 pt-4">
           <div className="space-y-2">
             <Label htmlFor="fullName">Full Name *</Label>
             <Input
@@ -174,8 +169,8 @@ export function ProfileCompletionFlow({ onComplete }: ProfileCompletionFlowProps
           <p className="text-xs text-gray-500 text-center">
             * Required fields
           </p>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
