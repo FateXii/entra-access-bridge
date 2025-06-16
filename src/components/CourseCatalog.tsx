@@ -8,7 +8,11 @@ import { Badge } from '@/components/ui/badge';
 import { Search, Star, Users, Clock } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
 
-export function CourseCatalog() {
+interface CourseCatalogProps {
+  onCourseSelect?: (courseId: string) => void;
+}
+
+export function CourseCatalog({ onCourseSelect }: CourseCatalogProps) {
   const { data: courses, isLoading } = useCourses();
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -74,7 +78,12 @@ export function CourseCatalog() {
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">{course.instructor_name}</span>
-                <Button size="sm">Enroll</Button>
+                <Button 
+                  size="sm" 
+                  onClick={() => onCourseSelect?.(course.id)}
+                >
+                  View Details
+                </Button>
               </div>
             </CardContent>
           </Card>

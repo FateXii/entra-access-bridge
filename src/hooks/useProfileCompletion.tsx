@@ -46,10 +46,15 @@ export function useProfileCompletion() {
     setIsProfileComplete(true);
   };
 
+  const refetch = async () => {
+    await checkProfileCompletion();
+  };
+
   return {
     isProfileComplete,
     loading,
     markProfileComplete,
     checkProfileCompletion,
+    refetch,
   };
 }
