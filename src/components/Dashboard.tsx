@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -8,17 +7,36 @@ import { CourseCatalog } from './CourseCatalog';
 import { CourseDetails } from './CourseDetails';
 import { TutoringSessions } from './TutoringSessions';
 import { UserProfile } from './UserProfile';
+import { ProfileCompletionFlow } from './ProfileCompletionFlow';
+import { useProfileCompletion } from '@/hooks/useProfileCompletion';
 
 type Page = 'home' | 'courses' | 'course-details' | 'tutoring' | 'profile';
 
 export function Dashboard() {
   const { user, signOut } = useAuth();
+  const { isProfileComplete, loading, markProfileComplete } = useProfileCompletion();
   const [currentPage, setCurrentPage] = useState<Page>('home');
   const [selectedCourseId, setSelectedCourseId] = useState<string>('');
 
   const handleSignOut = async () => {
     await signOut();
   };
+
+  // Show profile completion flow if profile is incomplete
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isProfileComplete === false) {
+    return <ProfileCompletionFlow onComplete={markProfileComplete} />;
+  }
 
   const renderNavigation = () => (
     <nav className="bg-white shadow-sm border-b">
